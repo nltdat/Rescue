@@ -38,6 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # REST framework and API docs
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'drf_spectacular',
+    # local apps
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -120,3 +126,72 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Custom user model
+AUTH_USER_MODEL = 'users.User'
+
+# REST framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# drf-spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Rescue API',
+    'DESCRIPTION': '''
+    API documentation for Rescue application.
+    
+    ## Authentication
+    Most endpoints require JWT authentication. Use the `/api/auth/login/` endpoint to obtain tokens.
+    
+    To authenticate requests:
+    1. Login to get `access` and `refresh` tokens
+    2. Include the access token in the Authorization header: `Authorization: Bearer <access_token>`
+    3. When the access token expires, use `/api/auth/token/refresh/` to get a new one
+    
+    ## API Endpoints
+    - **Authentication**: Register, login, logout, token refresh
+    - **User Profile**: Get and update current user profile
+    - **User Management**: Admin endpoints for managing users
+    ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': r'/api',
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+        'defaultModelsExpandDepth': 2,
+        'defaultModelExpandDepth': 2,
+        'displayRequestDuration': True,
+        'filter': True,
+    },
+    'SECURITY': [
+        {
+            'Bearer': []
+        }
+    ],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'Bearer': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+                'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+            }
+        }
+    },
+}
+
+# Simple JWT settings (reasonable defaults)
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
