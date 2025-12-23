@@ -1,6 +1,6 @@
 asgiref>=3.6.0
 Django==4.2.11
-psycopg2-binary==2.9.11
+psycopg2-binary==2.9.10
 sqlparse==0.5.4
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.2.2
