@@ -20,7 +20,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd ${{ secrets.PROJECT_PATH }}
           git pull origin main
-          source venv/bin/activate
+          source .venv/bin/activate
           pip install -r requirements.txt
           python manage.py migrate --noinput
           python manage.py collectstatic --noinput
