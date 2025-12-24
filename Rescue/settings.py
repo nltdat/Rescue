@@ -43,8 +43,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
+    'django_filters',
     # local apps
-    'users',
+    'users.apps.UsersConfig',
+    'incidents.apps.IncidentsConfig',
 ]
 
 MIDDLEWARE = [
@@ -194,3 +196,11 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
+# MinIO Configuration
+MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'minio:9000')
+MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'localhost:9000')
+MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
+MINIO_SECRET_KEY = os.getenv('MINIO_SECRET_KEY', 'minioadmin123')
+MINIO_BUCKET_NAME = os.getenv('MINIO_BUCKET_NAME', 'rescue-images')
+MINIO_USE_SSL = os.getenv('MINIO_USE_SSL', 'false').lower() == 'true'
