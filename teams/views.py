@@ -18,35 +18,6 @@ from users.models import User
 # ========== RESCUER APIS ==========
 
 @extend_schema(
-    summary='Register as rescuer',
-    description='User registers to become a rescuer. Requires admin approval.',
-    request=RescuerRegistrationSerializer,
-    responses={201: RescuerDetailSerializer},
-    examples=[
-        OpenApiExample(
-            'Rescuer registration',
-            value={
-                'national_id': '001234567890',
-                'national_id_image': 'http://localhost:9000/rescue-images/cccd/xxx.jpg',
-                'skill_set': ['bơi lội', 'sơ cứu', 'lái cano'],
-                'experience_years': 3,
-                'address': '123 Nguyễn Huệ, Quận 1, TP.HCM'
-            },
-            request_only=True
-        )
-    ]
-)
-class RescuerRegisterView(generics.CreateAPIView):
-    serializer_class = RescuerRegistrationSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        rescuer_detail = serializer.save()
-        # Note: Admin needs to verify and update user.role to 'rescuer'
-        return rescuer_detail
-
-
-@extend_schema(
     summary='Get rescuer profile',
     description='View rescuer details by user ID',
     responses={200: RescuerDetailSerializer}
@@ -102,7 +73,7 @@ class TeamListView(generics.ListAPIView):
 
 @extend_schema(
     summary='Create new rescue team',
-    description='Create a new rescue team. Only rescuers can create teams.',
+    description='Create a new rescue team. Any authenticated user can create teams. User automatically becomes a rescuer when creating a team.',
     request=RescueTeamSerializer,
     responses={201: RescueTeamSerializer},
     examples=[
@@ -123,6 +94,24 @@ class TeamListView(generics.ListAPIView):
 class TeamCreateView(generics.CreateAPIView):
     serializer_class = RescueTeamSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        
+        # Automatically promote user to rescuer when creating a team
+        if user.role != 'rescuer':
+            user.role = 'rescuer'
+            user.save()
+        
+        # Create or get RescuerDetail if needed
+        if not hasattr(user, 'rescuer_detail'):
+            RescuerDetail.objects.create(
+                user=user,
+                verified=True,  # Auto-verified when creating team
+                availability_status=RescuerDetail.AVAILABILITY_AVAILABLE
+            )
+        
+        serializer.save()
 
 
 @extend_schema(
@@ -157,7 +146,7 @@ class TeamMembersView(generics.ListAPIView):
 
 @extend_schema(
     summary='Join a team',
-    description='Send request to join a rescue team. Creates notification for team leader.',
+    description='Send request to join a rescue team. Any authenticated user can request to join. Creates notification for team leader.',
     request=JoinTeamSerializer,
     responses={201: TeamMemberSerializer},
     examples=[
@@ -180,13 +169,6 @@ class JoinTeamView(APIView):
             return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
 
         user = request.user
-
-        # Check if user is rescuer
-        if user.role != 'rescuer':
-            return Response(
-                {'error': 'Only rescuers can join teams'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         # Check if already a member
         existing = TeamMember.objects.filter(team=team, user=user).first()
@@ -225,7 +207,7 @@ class JoinTeamView(APIView):
 
 @extend_schema(
     summary='Approve/Reject team join request',
-    description='Leader approves or rejects a team join request',
+    description='Leader approves or rejects a team join request. When approved, user automatically becomes a rescuer.',
     request=TeamMemberSerializer,
     responses={200: TeamMemberSerializer}
 )
@@ -254,6 +236,21 @@ class ApproveMembershipView(APIView):
 
         membership.status = new_status
         membership.save()
+
+        # If approved, automatically promote user to rescuer
+        if new_status == TeamMember.STATUS_APPROVED:
+            user = membership.user
+            if user.role != 'rescuer':
+                user.role = 'rescuer'
+                user.save()
+            
+            # Create or get RescuerDetail if needed
+            if not hasattr(user, 'rescuer_detail'):
+                RescuerDetail.objects.create(
+                    user=user,
+                    verified=True,  # Auto-verified when approved to team
+                    availability_status=RescuerDetail.AVAILABILITY_AVAILABLE
+                )
 
         # Create notification for user
         notification_type = (Notification.TYPE_JOIN_APPROVED 
