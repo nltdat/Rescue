@@ -38,9 +38,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     id = models.BigAutoField(primary_key=True)
     full_name = models.CharField(max_length=255, blank=True)
-    phone = models.CharField(max_length=50, blank=True)
+    phone = models.CharField(max_length=50, blank=True, unique=True, null=True)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_USER)
+    profile_image = models.URLField(max_length=500, blank=True, null=True)
     location_lat = models.FloatField(null=True, blank=True)
     location_long = models.FloatField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
