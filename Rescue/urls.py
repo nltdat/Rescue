@@ -26,4 +26,5 @@ urlpatterns = [
     # apps
     path('api/', include('users.urls', namespace='users')),
     path('api/incidents/', include('incidents.urls', namespace='incidents')),
+    path('api/', include('teams.urls', namespace='teams')),
 ]

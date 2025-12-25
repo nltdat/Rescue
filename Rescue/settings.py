@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # local apps
     'users.apps.UsersConfig',
     'incidents.apps.IncidentsConfig',
+    'teams.apps.TeamsConfig',
 ]
 
 MIDDLEWARE = [
