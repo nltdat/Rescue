@@ -58,7 +58,7 @@ class RescueTeamSerializer(serializers.ModelSerializer):
         model = RescueTeam
         fields = [
             'id', 'name', 'description', 'logo_url', 'leader',
-            'area_name', 'operating_radius', 'specialty', 
+            'province', 'district', 'specialty', 
             'is_active', 'member_count', 'members', 
             'created_at', 'updated_at'
         ]
@@ -94,7 +94,7 @@ class RescueTeamListSerializer(serializers.ModelSerializer):
         model = RescueTeam
         fields = [
             'id', 'name', 'description', 'logo_url', 'leader_name',
-            'area_name', 'operating_radius', 'specialty', 
+            'province', 'district', 'specialty', 
             'is_active', 'member_count', 'created_at'
         ]
 

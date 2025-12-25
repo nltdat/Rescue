@@ -40,8 +40,8 @@ class RescueTeam(models.Model):
     description = models.TextField(blank=True)
     logo_url = models.URLField(max_length=500, blank=True)
     leader = models.ForeignKey(User, on_delete=models.CASCADE, related_name='led_teams')
-    area_name = models.CharField(max_length=255)  # Vùng hoạt động
-    operating_radius = models.FloatField(help_text='Bán kính hoạt động (km)')
+    province = models.CharField(max_length=255, default='', help_text='Tỉnh/Thành phố hoạt động')  # Tỉnh/Thành phố
+    district = models.CharField(max_length=255, blank=True, default='', help_text='Quận/Huyện hoạt động')  # Quận/Huyện (optional)
     specialty = models.CharField(max_length=255, blank=True)  # Chuyên môn
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
