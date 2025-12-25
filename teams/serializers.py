@@ -69,9 +69,6 @@ class RescueTeamSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
-        # Check if user is rescuer
-        if user.role != 'rescuer':
-            raise serializers.ValidationError('Only rescuers can create teams')
         validated_data['leader'] = user
         team = super().create(validated_data)
         

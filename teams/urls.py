@@ -1,7 +1,6 @@
 from django.urls import path
 from .views import (
     # Rescuer APIs
-    RescuerRegisterView,
     RescuerProfileView,
     RescuerStatusUpdateView,
     # Team APIs
@@ -23,7 +22,6 @@ app_name = 'teams'
 
 urlpatterns = [
     # Rescuer endpoints
-    path('rescuers/register/', RescuerRegisterView.as_view(), name='rescuer-register'),
     path('rescuers/profile/<int:user_id>/', RescuerProfileView.as_view(), name='rescuer-profile'),
     path('rescuers/status/', RescuerStatusUpdateView.as_view(), name='rescuer-status'),
 
