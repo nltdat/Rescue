@@ -5,7 +5,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from django.db.models import Q
 from django.utils import timezone
-import math
 
 from .models import RescuerDetail, RescueTeam, TeamMember, Notification
 from .serializers import (
@@ -82,12 +81,10 @@ class RescuerStatusUpdateView(generics.UpdateAPIView):
 
 @extend_schema(
     summary='List all rescue teams',
-    description='Get list of all rescue teams. Supports filtering by area and searching nearby teams.',
+    description='Get list of all rescue teams. Supports filtering by province, district.',
     parameters=[
-        OpenApiParameter(name='area_name', description='Filter by area', type=str),
-        OpenApiParameter(name='lat', description='User latitude for nearby search', type=float),
-        OpenApiParameter(name='lng', description='User longitude for nearby search', type=float),
-        OpenApiParameter(name='radius', description='Search radius in km (default: 50)', type=float),
+        OpenApiParameter(name='province', description='Filter by province/city', type=str),
+        OpenApiParameter(name='district', description='Filter by district', type=str),
         OpenApiParameter(name='search', description='Search in name, description, specialty', type=str),
     ],
     responses={200: RescueTeamListSerializer(many=True)}
@@ -95,45 +92,12 @@ class RescuerStatusUpdateView(generics.UpdateAPIView):
 class TeamListView(generics.ListAPIView):
     serializer_class = RescueTeamListSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['area_name', 'is_active']
+    filterset_fields = ['province', 'district', 'is_active']
     search_fields = ['name', 'description', 'specialty']
 
     def get_queryset(self):
         queryset = RescueTeam.objects.filter(is_active=True).select_related('leader')
-        
-        # Nearby search by coordinates
-        lat = self.request.query_params.get('lat')
-        lng = self.request.query_params.get('lng')
-        radius = float(self.request.query_params.get('radius', 50))  # default 50km
-        
-        if lat and lng:
-            lat = float(lat)
-            lng = float(lng)
-            # Filter teams within operating radius
-            # Note: This is a simple filter, for production use PostGIS
-            nearby_teams = []
-            for team in queryset:
-                if team.leader.location_lat and team.leader.location_long:
-                    distance = self._calculate_distance(
-                        lat, lng,
-                        team.leader.location_lat, team.leader.location_long
-                    )
-                    if distance <= radius:
-                        nearby_teams.append(team.id)
-            queryset = queryset.filter(id__in=nearby_teams)
-        
         return queryset
-
-    def _calculate_distance(self, lat1, lon1, lat2, lon2):
-        """Calculate distance between two points in km using Haversine formula"""
-        R = 6371  # Earth radius in km
-        dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lon2 - lon1)
-        a = (math.sin(dlat / 2) ** 2 +
-             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-             math.sin(dlon / 2) ** 2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return R * c
 
 
 @extend_schema(
@@ -148,8 +112,8 @@ class TeamListView(generics.ListAPIView):
                 'name': 'Đội cứu hộ Quận 7',
                 'description': 'Chuyên cứu hộ lũ lụt khu vực Quận 7',
                 'logo_url': 'http://localhost:9000/rescue-images/teams/logo.jpg',
-                'area_name': 'Quận 7, TP.HCM',
-                'operating_radius': 15.0,
+                'province': 'TP.HCM',
+                'district': 'Quận 7',
                 'specialty': 'Cứu hộ lũ lụt'
             },
             request_only=True

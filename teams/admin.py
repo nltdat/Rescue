@@ -45,9 +45,9 @@ class RescuerDetailAdmin(admin.ModelAdmin):
 
 @admin.register(RescueTeam)
 class RescueTeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'leader', 'area_name', 'operating_radius', 'is_active', 'created_at')
-    list_filter = ('is_active', 'area_name', 'created_at')
-    search_fields = ('name', 'description', 'area_name', 'leader__email')
+    list_display = ('name', 'leader', 'province', 'district', 'is_active', 'created_at')
+    list_filter = ('is_active', 'province', 'created_at')
+    search_fields = ('name', 'description', 'province', 'district', 'leader__email')
     readonly_fields = ('created_at', 'updated_at')
     
     fieldsets = (
@@ -55,7 +55,7 @@ class RescueTeamAdmin(admin.ModelAdmin):
             'fields': ('name', 'description', 'logo_url', 'leader')
         }),
         ('Operating Area', {
-            'fields': ('area_name', 'operating_radius', 'specialty')
+            'fields': ('province', 'district', 'specialty')
         }),
         ('Status', {
             'fields': ('is_active',)
