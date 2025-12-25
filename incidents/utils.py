@@ -22,17 +22,54 @@ class MinIOClient:
         self._ensure_bucket_exists()
 
     def _ensure_bucket_exists(self):
-        """Create bucket if it doesn't exist"""
+        """Create bucket if it doesn't exist and set public policy"""
+        from botocore.exceptions import ClientError
+        
         try:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
-        except self.s3_client.exceptions.NoSuchBucket:
-            try:
-                self.s3_client.create_bucket(Bucket=self.bucket_name)
-                logger.info(f"Created bucket: {self.bucket_name}")
-            except Exception as e:
-                logger.exception(f"Error creating bucket: {e}")
+            logger.info(f"Bucket {self.bucket_name} already exists")
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
+            if error_code == '404' or error_code == 'NoSuchBucket':
+                try:
+                    logger.info(f"Creating bucket: {self.bucket_name}")
+                    self.s3_client.create_bucket(Bucket=self.bucket_name)
+                    logger.info(f"Created bucket: {self.bucket_name}")
+                except Exception as create_error:
+                    logger.exception(f"Error creating bucket: {create_error}")
+                    raise
+            else:
+                logger.exception(f"Error checking bucket: {e}")
+                raise
         except Exception as e:
-            logger.exception(f"Error checking bucket: {e}")
+            logger.exception(f"Unexpected error checking bucket: {e}")
+            raise
+        
+        # Ensure bucket is public
+        try:
+            self._set_public_policy()
+            logger.info(f"Set public policy for bucket: {self.bucket_name}")
+        except Exception as e:
+            logger.warning(f"Could not set public policy: {e}")
+    
+    def _set_public_policy(self):
+        """Set bucket policy to allow public read access"""
+        import json
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["s3:GetObject"],
+                    "Resource": [f"arn:aws:s3:::{self.bucket_name}/*"]
+                }
+            ]
+        }
+        self.s3_client.put_bucket_policy(
+            Bucket=self.bucket_name,
+            Policy=json.dumps(policy)
+        )
 
     def upload_file(self, file, folder='incidents'):
         """
